@@ -2,11 +2,14 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import date, timedelta, datetime
 import pandas as pd
+import math
 
 useetv_base_url = 'https://www.useetv.com/livetv/'
 tvlist = ['tvri', 'beritasatu', 'indosiar', 'kompastv', 'metrotv', 'net', 'trans7', 'transtv', 'sctv']
 
-verified_tv = ['kompastv', 'indosiar']
+checkpoint = 'kompastv'
+problem = ['trans7', 'sctv']
+selected_tv = 'tvri'
 
 times_on_csv = [
   '00.00 - 00.30', '00.30 - 01.00', '01.00 - 01.30', '01.30 - 02.00', '02.00 - 02.30', '02.30 - 03.00', 
@@ -18,8 +21,6 @@ times_on_csv = [
   '18.00 - 18.30', '18.30 - 19.00', '19.00 - 19.30', '19.30 - 20.00', '20.00 - 20.30', '20.30 - 21.00', 
   '21.00 - 21.30', '21.30 - 22.00', '22.00 - 22.30', '22.30 - 23.00', '23.00 - 23.30', '23.30 - 00.00'
 ]
-
-selected_tv = tvlist[2]
 
 def extract_text_from_tag(tag):
   return tag.text
@@ -52,8 +53,8 @@ def extract_schedule_in_a_week(dates):
 
 def get_num_of_row_of_a_schedules(times):
   nrows = []
-  for i in range(len(times)):
-    nrow = get_num_of_row_of_a_schedule(times[i])
+  for time in times:
+    nrow = get_num_of_row_of_a_schedule(time)
     nrows.append(nrow)
   # print(times)
   # print(nrows)
@@ -63,12 +64,15 @@ def get_num_of_row_of_a_schedule(time):
   extracted_time = time.replace(' ', '').split('-')
   start_time = datetime.strptime(extracted_time[0], '%H:%M')
   end_time = datetime.strptime(extracted_time[1], '%H:%M')
-  diff = end_time - start_time
-  nrow = int(diff.total_seconds() / 1800)
-  if nrow < 0: # resolve offset day
-    nrow = nrow + 48
-  elif nrow == 0: # resolve under 30mins program
-    nrow = 1
+  diff = (end_time - start_time).total_seconds()
+  if diff >= 0 and diff <= 300: # drop 5mins program
+    return 0
+  elif diff >= 0 and diff <= 2700: # resolve under-equal 45mins program
+    return 1
+  else:
+    nrow = math.ceil(diff / 1800)
+    if nrow < 0: # resolve offset day
+      nrow = nrow + 48
   return nrow
 
 def extract_schedule_into_list(titles, nrows):
@@ -98,7 +102,7 @@ def extract_schedule_to_csv(schedules):
   print(len(schedules))
   df = pd.DataFrame()
   df['Waktu'] = times_on_csv
-  df[selected_tv.upper()] = schedules
+  df[selected_tv.upper()] = pd.Series(schedules)
   print(df)
   return df
 
