@@ -5,11 +5,9 @@ import pandas as pd
 import math
 
 useetv_base_url = 'https://www.useetv.com/livetv/'
-tvlist = ['tvri', 'beritasatu', 'indosiar', 'kompastv', 'metrotv', 'net', 'trans7', 'transtv', 'sctv']
-
-checkpoint = 'kompastv'
-problem = ['trans7', 'sctv']
-selected_tv = 'tvri'
+channel_tv = ['tvri', 'beritasatu', 'indosiar', 'kompastv', 'metrotv', 'net', 'trans7', 'transtv', 'sctv']
+problem_channel_tv= ['trans7', 'sctv']
+selected_tv = 'sctv'
 
 times_on_csv = [
   '00.00 - 00.30', '00.30 - 01.00', '01.00 - 01.30', '01.30 - 02.00', '02.00 - 02.30', '02.30 - 03.00', 
@@ -65,9 +63,9 @@ def get_num_of_row_of_a_schedule(time):
   start_time = datetime.strptime(extracted_time[0], '%H:%M')
   end_time = datetime.strptime(extracted_time[1], '%H:%M')
   diff = (end_time - start_time).total_seconds()
-  if diff >= 0 and diff <= 300: # drop 5mins program
+  if diff >= 0 and diff <= 900: # drop under-equal 15mins program
     return 0
-  elif diff >= 0 and diff <= 2700: # resolve under-equal 45mins program
+  elif diff > 900 and diff < 2700: # resolve under 45mins program
     return 1
   else:
     nrow = math.ceil(diff / 1800)
