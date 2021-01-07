@@ -22,15 +22,17 @@ def extract_schedule_in_a_day(parser, date):
   titles = list(map(extract_text_from_tag, schedule_by_date.select("h4")))
   times = list(map(extract_text_from_tag, schedule_by_date.select("p")))
   nrows = get_num_of_row_of_a_schedules(times)
+  extract_schedule_into_list(titles, nrows)
   schedule = dict(zip(times, titles))
   return schedule
 
 def extract_schedule_in_a_week(dates):
-  page = requests.get(useetv_base_url + tvlist[3])
+  page = requests.get(useetv_base_url + tvlist[3]) #kompastv
   parser = BeautifulSoup(page.content, 'html.parser')
   for date in dates:
     print(date)
     print(extract_schedule_in_a_day(parser, date))
+    break
 
 def get_num_of_row_of_a_schedules(times):
   nrows = []
@@ -49,6 +51,17 @@ def get_num_of_row_of_a_schedule(time):
   nrow = int(diff.total_seconds() / 1800)
   nrow = nrow + 48 if nrow < 0 else nrow
   return nrow
+
+def extract_schedule_into_list(titles, nrows):
+  if len(nrows) != len(titles):
+    print("length of nrows should be same with length of titles! exit.")
+    quit()
+  schedule_in_a_day = []
+  for i in range(len(titles)):
+    for j in range(nrows[i]):
+      schedule_in_a_day.append(titles[i])
+  print(schedule_in_a_day)
+  return schedule_in_a_day
 
 dates = generate_date_a_week_ago()
 extract_schedule_in_a_week(dates)
