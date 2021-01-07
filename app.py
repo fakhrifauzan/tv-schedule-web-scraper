@@ -54,8 +54,6 @@ def get_num_of_row_of_a_schedules(times):
   for time in times:
     nrow = get_num_of_row_of_a_schedule(time)
     nrows.append(nrow)
-  # print(times)
-  # print(nrows)
   return nrows
 
 def get_num_of_row_of_a_schedule(time):
@@ -81,23 +79,17 @@ def extract_schedule_into_list(titles, nrows):
   for i in range(len(titles)):
     for j in range(nrows[i]):
       schedule_in_a_day.append(titles[i])
-  print(schedule_in_a_day)
   return schedule_in_a_day
 
 def normalize_time(times):
-  print("Previous Time: ")
-  print(times)
   default_time = '00:00'
   if default_time not in times[0]:
     times[0] = times[0].replace(times[0][:5], default_time)
   if default_time not in times[-1]:
     times[-1] = times[-1].replace(times[-1][-5:], default_time)
-  print("Normalized Time: ")
-  print(times)
   return times
 
 def extract_schedule_to_csv(schedules):
-  print(len(schedules))
   df = pd.DataFrame()
   df['Waktu'] = times_on_csv
   df[selected_tv.upper()] = pd.Series(schedules)
