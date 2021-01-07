@@ -1,9 +1,25 @@
 import requests
 from bs4 import BeautifulSoup
 from datetime import date, timedelta, datetime
+import pandas as pd
 
 useetv_base_url = 'https://www.useetv.com/livetv/'
 tvlist = ['tvri', 'beritasatu', 'indosiar', 'kompastv', 'metrotv', 'net', 'trans7', 'transtv', 'sctv']
+
+verified_tv = ['kompastv', 'indosiar']
+
+times_on_csv = [
+  '00.00 - 00.30', '00.30 - 01.00', '01.00 - 01.30', '01.30 - 02.00', '02.00 - 02.30', '02.30 - 03.00', 
+  '03.00 - 03.30', '03.30 - 04.00', '04.00 - 04.30', '04.30 - 05.00', '05.00 - 05.30', '05.30 - 06.00', 
+  '06.00 - 06.30', '06.30 - 07.00', '07.00 - 07.30', '07.30 - 08.00', '08.00 - 08.30', '08.30 - 09.00', 
+  '09.00 - 09.30', '09.30 - 10.00', '10.00 - 10.30', '10.30 - 11.00', '11.00 - 11.30', '11.30 - 12.00', 
+  '12.00 - 12.30', '12.30 - 13.00', '13.00 - 13.30', '13.30 - 14.00', '14.00 - 14.30', '14.30 - 15.00', 
+  '15.00 - 15.30', '15.30 - 16.00', '16.00 - 16.30', '16.30 - 17.00', '17.00 - 17.30', '17.30 - 18.00', 
+  '18.00 - 18.30', '18.30 - 19.00', '19.00 - 19.30', '19.30 - 20.00', '20.00 - 20.30', '20.30 - 21.00', 
+  '21.00 - 21.30', '21.30 - 22.00', '22.00 - 22.30', '22.30 - 23.00', '23.00 - 23.30', '23.30 - 00.00'
+]
+
+selected_tv = tvlist[2]
 
 def extract_text_from_tag(tag):
   return tag.text
@@ -22,16 +38,16 @@ def extract_schedule_in_a_day(parser, date):
   titles = list(map(extract_text_from_tag, schedule_by_date.select("h4")))
   times = list(map(extract_text_from_tag, schedule_by_date.select("p")))
   nrows = get_num_of_row_of_a_schedules(times)
-  extract_schedule_into_list(titles, nrows)
-  schedule = dict(zip(times, titles))
+  schedule = extract_schedule_into_list(titles, nrows)
+  extract_schedule_to_csv(schedule)
   return schedule
 
 def extract_schedule_in_a_week(dates):
-  page = requests.get(useetv_base_url + tvlist[3]) #kompastv
+  page = requests.get(useetv_base_url + selected_tv)
   parser = BeautifulSoup(page.content, 'html.parser')
   for date in dates:
     print(date)
-    print(extract_schedule_in_a_day(parser, date))
+    extract_schedule_in_a_day(parser, date)
     break
 
 def get_num_of_row_of_a_schedules(times):
@@ -49,7 +65,10 @@ def get_num_of_row_of_a_schedule(time):
   end_time = datetime.strptime(extracted_time[1], '%H:%M')
   diff = end_time - start_time
   nrow = int(diff.total_seconds() / 1800)
-  nrow = nrow + 48 if nrow < 0 else nrow
+  if nrow < 0: # resolve offset day
+    nrow = nrow + 48
+  elif nrow == 0: # resolve under 30mins program
+    nrow = 1
   return nrow
 
 def extract_schedule_into_list(titles, nrows):
@@ -62,6 +81,14 @@ def extract_schedule_into_list(titles, nrows):
       schedule_in_a_day.append(titles[i])
   print(schedule_in_a_day)
   return schedule_in_a_day
+
+def extract_schedule_to_csv(schedules):
+  print(len(schedules))
+  df = pd.DataFrame()
+  df['Waktu'] = times_on_csv
+  df[selected_tv.upper()] = schedules
+  print(df)
+  return df
 
 dates = generate_date_a_week_ago()
 extract_schedule_in_a_week(dates)
