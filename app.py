@@ -1,12 +1,13 @@
 import requests
 from bs4 import BeautifulSoup
 from datetime import date, timedelta, datetime
-import pandas as pd
 import math
+import pandas as pd
+import xlsxwriter
 
 useetv_base_url = 'https://www.useetv.com/livetv/'
 channel_tv = ['tvri', 'beritasatu', 'indosiar', 'kompastv', 'metrotv', 'net', 'trans7', 'transtv', 'sctv']
-problem_channel_tv = ['trans7', 'sctv']
+# problem_channel_tv = ['trans7', 'sctv']
 
 times_on_csv = [
   '00.00 - 00.30', '00.30 - 01.00', '01.00 - 01.30', '01.30 - 02.00', '02.00 - 02.30', '02.30 - 03.00', 
@@ -40,16 +41,18 @@ def extract_schedule_in_a_day(parser, date):
   return schedule
 
 def extract_schedule_in_a_week(dates):
-  for date in dates:
-    print(date)
+  schedule_dict = {}
+  for date in reversed(dates):
+    print("Start fetching schedules for " + date)
     schedules = {}
     for channel in channel_tv:
       page = requests.get(useetv_base_url + channel)
       parser = BeautifulSoup(page.content, 'html.parser')
       schedule = extract_schedule_in_a_day(parser, date)
       schedules[channel] = schedule
-    print(extract_schedules_to_dataframe(schedules))
-    break
+    schedule_dict[date] = extract_schedules_to_dataframe(schedules)
+    print("Done fetch schedules " + date)
+  export_schedules_to_xlsx(schedule_dict)
 
 def get_num_of_row_of_a_schedules(times):
   nrows = []
@@ -97,6 +100,14 @@ def extract_schedules_to_dataframe(schedules):
   for key, value in schedules.items():
     df[key.upper()] = pd.Series(value)
   return df
+
+def export_schedules_to_xlsx(schedules):
+  print("Start export schedules to XLSX file...")
+  writer = pd.ExcelWriter('output.xlsx', engine='xlsxwriter')
+  for date, schedule in schedules.items():
+    schedule.to_excel(writer, sheet_name=date, index=False)
+  writer.save()
+  print("Done write to XLSX file.")
 
 dates = generate_date_a_week_ago()
 extract_schedule_in_a_week(dates)
