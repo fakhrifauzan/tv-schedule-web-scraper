@@ -36,7 +36,7 @@ def generate_date_a_week_ago():
 def extract_schedule_in_a_day(parser, date):
   schedule_by_date = parser.find("div", {"id": date})
   titles = list(map(extract_text_from_tag, schedule_by_date.select("h4")))
-  times = list(map(extract_text_from_tag, schedule_by_date.select("p")))
+  times = normalize_time(list(map(extract_text_from_tag, schedule_by_date.select("p"))))
   nrows = get_num_of_row_of_a_schedules(times)
   schedule = extract_schedule_into_list(titles, nrows)
   extract_schedule_to_csv(schedule)
@@ -81,6 +81,18 @@ def extract_schedule_into_list(titles, nrows):
       schedule_in_a_day.append(titles[i])
   print(schedule_in_a_day)
   return schedule_in_a_day
+
+def normalize_time(times):
+  print("Previous Time: ")
+  print(times)
+  default_time = '00:00'
+  if default_time not in times[0]:
+    times[0] = times[0].replace(times[0][:5], default_time)
+  if default_time not in times[-1]:
+    times[-1] = times[-1].replace(times[-1][-5:], default_time)
+  print("Normalized Time: ")
+  print(times)
+  return times
 
 def extract_schedule_to_csv(schedules):
   print(len(schedules))
