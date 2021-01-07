@@ -6,8 +6,7 @@ import math
 
 useetv_base_url = 'https://www.useetv.com/livetv/'
 channel_tv = ['tvri', 'beritasatu', 'indosiar', 'kompastv', 'metrotv', 'net', 'trans7', 'transtv', 'sctv']
-problem_channel_tv= ['trans7', 'sctv']
-selected_tv = 'sctv'
+problem_channel_tv = ['trans7', 'sctv']
 
 times_on_csv = [
   '00.00 - 00.30', '00.30 - 01.00', '01.00 - 01.30', '01.30 - 02.00', '02.00 - 02.30', '02.30 - 03.00', 
@@ -38,15 +37,18 @@ def extract_schedule_in_a_day(parser, date):
   times = normalize_time(list(map(extract_text_from_tag, schedule_by_date.select("p"))))
   nrows = get_num_of_row_of_a_schedules(times)
   schedule = extract_schedule_into_list(titles, nrows)
-  extract_schedule_to_csv(schedule)
   return schedule
 
 def extract_schedule_in_a_week(dates):
-  page = requests.get(useetv_base_url + selected_tv)
-  parser = BeautifulSoup(page.content, 'html.parser')
   for date in dates:
     print(date)
-    extract_schedule_in_a_day(parser, date)
+    schedules = {}
+    for channel in channel_tv:
+      page = requests.get(useetv_base_url + channel)
+      parser = BeautifulSoup(page.content, 'html.parser')
+      schedule = extract_schedule_in_a_day(parser, date)
+      schedules[channel] = schedule
+    print(extract_schedules_to_dataframe(schedules))
     break
 
 def get_num_of_row_of_a_schedules(times):
@@ -89,11 +91,11 @@ def normalize_time(times):
     times[-1] = times[-1].replace(times[-1][-5:], default_time)
   return times
 
-def extract_schedule_to_csv(schedules):
+def extract_schedules_to_dataframe(schedules):
   df = pd.DataFrame()
   df['Waktu'] = times_on_csv
-  df[selected_tv.upper()] = pd.Series(schedules)
-  print(df)
+  for key, value in schedules.items():
+    df[key.upper()] = pd.Series(value)
   return df
 
 dates = generate_date_a_week_ago()
