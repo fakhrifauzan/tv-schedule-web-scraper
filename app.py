@@ -1,12 +1,22 @@
 from datetime import date, timedelta, datetime
-from client import useetv
+from client import useetv, vidio
 import math
 import pandas as pd
 import xlsxwriter
 import time
 
-channel_tv = ['tvri', 'beritasatu', 'indosiar', 'kompastv', 'metrotv', 'net', 'trans7', 'transtv', 'sctv']
-# problem_channel_tv = ['trans7', 'sctv']
+channels_data = [
+  ['TVRI', 'tvri', 'useetv'],
+  ['BERITA SATU', 'beritasatu', 'useetv'],
+  ['INDOSIAR', 'indosiar', 'useetv'],
+  ['KOMPAS TV', 'kompastv', 'useetv'],
+  ['METRO TV', 'metrotv', 'useetv'],
+  ['NET TV', 'net', 'useetv'],
+  ['TRANS 7', 'trans7', 'useetv'], #need improvement
+  ['TRANS TV', 'transtv', 'useetv'],
+  ['RCTI', '665', 'vidio'], #need improvement
+  ['SCTV', 'sctv', 'useetv'] #need improvement
+]
 
 times_on_csv = [
   '00.00 - 00.30', '00.30 - 01.00', '01.00 - 01.30', '01.30 - 02.00', '02.00 - 02.30', '02.30 - 03.00', 
@@ -19,9 +29,6 @@ times_on_csv = [
   '21.00 - 21.30', '21.30 - 22.00', '22.00 - 22.30', '22.30 - 23.00', '23.00 - 23.30', '23.30 - 00.00'
 ]
 
-def get_text_from_tag(tag):
-  return tag.text
-
 def generate_date_a_week_ago():
   reference_date = date.today()
   dates_a_week = [reference_date.isoformat()]
@@ -31,29 +38,46 @@ def generate_date_a_week_ago():
     reference_date -= timedelta(days = 1)
   return dates_a_week
 
-def extract_schedule_in_a_day(parser, date):
-  schedule_by_date = useetv.get_raw_schedule_by_date(parser, date)
-  titles = useetv.get_titles_from_raw_schedule(schedule_by_date)
-  times = normalize_time(useetv.get_times_from_raw_schedule(schedule_by_date))
+def extract_schedule_in_a_day(source, parser, date):
+  if source == 'vidio':
+    schedule_by_date = vidio.get_raw_schedule_by_date(parser, date)
+    titles = vidio.get_titles_from_raw_schedule(schedule_by_date)
+    times = normalize_time(vidio.get_times_from_raw_schedule(schedule_by_date))
+  elif source == 'useetv':
+    schedule_by_date = useetv.get_raw_schedule_by_date(parser, date)
+    titles = useetv.get_titles_from_raw_schedule(schedule_by_date)
+    times = normalize_time(useetv.get_times_from_raw_schedule(schedule_by_date))
+  else:
+    print('Source not supported! Please use useetv or vidio instead.')
+    quit()
   nrows = get_num_of_row_of_a_schedules(times)
   schedule = extract_schedule_into_list(titles, nrows)
   return schedule
 
-def get_channel_schedule_in_a_week(channel, dates):
-  print("Start fetching schedules for " + channel)
+def get_channel_schedule_in_a_week(channel, source, dates):
   schedule_dict = {}
-  parser = useetv.get_raw_schedule_by_channel(channel)
+  if source == 'vidio':
+    parser = vidio.get_raw_schedule_by_channel(channel)
+  elif source == 'useetv':
+    parser = useetv.get_raw_schedule_by_channel(channel)
+  else:
+    print('Source not supported! Please use useetv or vidio instead.')
+    quit()
   for date in reversed(dates):
-    schedule = extract_schedule_in_a_day(parser, date)
+    schedule = extract_schedule_in_a_day(source, parser, date)
     schedule_dict[date] = schedule
-  print("Done fetch " + channel + " schedules")
   return schedule_dict
 
 def get_all_channel_schedule_in_a_week(channels, dates):
   schedules_dict = {}
   for channel in channels:
-    schedule = get_channel_schedule_in_a_week(channel, dates)
-    schedules_dict[channel] = schedule
+    channel_name = channel[0]
+    channel_key = channel[1]
+    channel_source = channel[2]
+    print("Start fetching schedules for " + channel_name + " (" + channel_source + ")")
+    schedule = get_channel_schedule_in_a_week(channel_key, channel_source, dates)
+    schedules_dict[channel_name] = schedule
+    print("Done fetch " + channel_name + " schedules")
   transformed_schedules = transform_schedules_dict_to_dataframes(schedules_dict, dates)
   export_schedules_to_xlsx(transformed_schedules)
 
@@ -61,10 +85,10 @@ def transform_schedules_dict_to_dataframes(schedules_dict, dates):
   dataframes_dict = {}
   for date in reversed(dates):
     df = pd.DataFrame()
-    df['Waktu'] = times_on_csv
+    df['WAKTU'] = times_on_csv
     for channel in schedules_dict.keys():
       schedule = schedules_dict[channel][date]
-      df[channel.upper()] = pd.Series(schedule)
+      df[channel] = pd.Series(schedule)
     dataframes_dict[date] = df
   return dataframes_dict
 
@@ -110,7 +134,7 @@ def normalize_time(times):
 
 def export_schedules_to_xlsx(schedules):
   print("Start export schedules to XLSX file...")
-  writer = pd.ExcelWriter('output.xlsx', engine='xlsxwriter')
+  writer = pd.ExcelWriter('result.xlsx', engine='xlsxwriter')
   for date, schedule in schedules.items():
     schedule.to_excel(writer, sheet_name=date, index=False)
   writer.save()
@@ -118,7 +142,7 @@ def export_schedules_to_xlsx(schedules):
 
 start_time = time.time()
 dates = generate_date_a_week_ago()
-get_all_channel_schedule_in_a_week(channel_tv, dates)
+get_all_channel_schedule_in_a_week(channels_data, dates)
 end_time = time.time()
 time_elapsed = end_time - start_time
 print("Duration: " + str(time_elapsed) + " second")
