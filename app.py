@@ -1,12 +1,10 @@
-import requests
-from bs4 import BeautifulSoup
 from datetime import date, timedelta, datetime
+from client import useetv
 import math
 import pandas as pd
 import xlsxwriter
 import time
 
-useetv_base_url = 'https://www.useetv.com/livetv/'
 channel_tv = ['tvri', 'beritasatu', 'indosiar', 'kompastv', 'metrotv', 'net', 'trans7', 'transtv', 'sctv']
 # problem_channel_tv = ['trans7', 'sctv']
 
@@ -34,9 +32,9 @@ def generate_date_a_week_ago():
   return dates_a_week
 
 def extract_schedule_in_a_day(parser, date):
-  schedule_by_date = parser.find("div", {"id": date})
-  titles = list(map(get_text_from_tag, schedule_by_date.select("h4")))
-  times = normalize_time(list(map(get_text_from_tag, schedule_by_date.select("p"))))
+  schedule_by_date = useetv.get_raw_schedule_by_date(parser, date)
+  titles = useetv.get_titles_from_raw_schedule(schedule_by_date)
+  times = normalize_time(useetv.get_times_from_raw_schedule(schedule_by_date))
   nrows = get_num_of_row_of_a_schedules(times)
   schedule = extract_schedule_into_list(titles, nrows)
   return schedule
@@ -44,8 +42,7 @@ def extract_schedule_in_a_day(parser, date):
 def get_channel_schedule_in_a_week(channel, dates):
   print("Start fetching schedules for " + channel)
   schedule_dict = {}
-  page = requests.get(useetv_base_url + channel)
-  parser = BeautifulSoup(page.content, 'html.parser')
+  parser = useetv.get_raw_schedule_by_channel(channel)
   for date in reversed(dates):
     schedule = extract_schedule_in_a_day(parser, date)
     schedule_dict[date] = schedule
