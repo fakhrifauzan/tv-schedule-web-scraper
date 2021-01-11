@@ -137,8 +137,25 @@ def export_schedules_to_xlsx(schedules):
   writer = pd.ExcelWriter('result.xlsx', engine='xlsxwriter')
   for date, schedule in schedules.items():
     schedule.to_excel(writer, sheet_name=date, index=False)
+  writer = custom_excel_formatting(writer)
   writer.save()
   print("Done write to XLSX file.")
+
+def custom_excel_formatting(writer):
+  for sheet_name in writer.sheets.keys():
+    worksheet = writer.sheets[sheet_name]
+    custom_format = writer.book.add_format({
+      'font_name': 'Arial',
+      'font_size': 10,
+      'text_wrap': True,
+      'valign': 'vcenter'
+    })
+    worksheet.freeze_panes(1, 1)
+    worksheet.set_column('A:A', 12, custom_format)
+    worksheet.set_column('B:Z', 18, custom_format)
+    for row in range(1, 49):
+      worksheet.set_row(row, 25, custom_format)
+  return writer
 
 start_time = time.time()
 dates = generate_date_a_week_ago()
