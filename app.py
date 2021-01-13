@@ -1,5 +1,5 @@
 from datetime import date, timedelta, datetime
-from client import useetv, vidio
+from client import client
 import math
 import pandas as pd
 import xlsxwriter
@@ -39,33 +39,18 @@ def generate_date_a_week_ago():
     reference_date -= timedelta(days = 1)
   return dates_a_week
 
-def extract_schedule_in_a_day(source, parser, date):
-  if source == 'vidio':
-    schedule_by_date = vidio.get_raw_schedule_by_date(parser, date)
-    titles = vidio.get_titles_from_raw_schedule(schedule_by_date)
-    times = normalize_time(vidio.get_times_from_raw_schedule(schedule_by_date))
-  elif source == 'useetv':
-    schedule_by_date = useetv.get_raw_schedule_by_date(parser, date)
-    titles = useetv.get_titles_from_raw_schedule(schedule_by_date)
-    times = normalize_time(useetv.get_times_from_raw_schedule(schedule_by_date))
-  else:
-    print('Source not supported! Please use useetv or vidio instead.')
-    quit()
+def extract_schedule_in_a_day(source, channel_parser, date):
+  titles, times = client.get_day_schedule_by_source_and_date(source, channel_parser, date)
+  times = normalize_time(times)
   nrows = get_num_of_row_of_a_schedules(times)
   schedule = extract_schedule_into_list(titles, nrows)
   return schedule
 
 def get_channel_schedule_in_a_week(channel, source, dates):
   schedule_dict = {}
-  if source == 'vidio':
-    parser = vidio.get_raw_schedule_by_channel(channel)
-  elif source == 'useetv':
-    parser = useetv.get_raw_schedule_by_channel(channel)
-  else:
-    print('Source not supported! Please use useetv or vidio instead.')
-    quit()
+  channel_parser = client.get_week_schedule_parser_by_source_and_channel(source, channel)
   for date in reversed(dates):
-    schedule = extract_schedule_in_a_day(source, parser, date)
+    schedule = extract_schedule_in_a_day(source, channel_parser, date)
     schedule_dict[date] = schedule
   return schedule_dict
 
