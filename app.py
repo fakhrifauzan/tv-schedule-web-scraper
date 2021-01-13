@@ -1,23 +1,11 @@
 from datetime import date, timedelta, datetime
 from client import client
+from csv import reader
 import math
 import pandas as pd
 import xlsxwriter
 import time
 import locale
-
-channels_data = [
-  ['TVRI', 'tvri', 'useetv'],
-  ['BERITA SATU', 'beritasatu', 'useetv'],
-  ['INDOSIAR', 'indosiar', 'useetv'],
-  ['KOMPAS TV', 'kompastv', 'useetv'],
-  ['METRO TV', 'metrotv', 'useetv'],
-  ['NET TV', 'net', 'useetv'],
-  ['TRANS 7', 'trans7', 'useetv'], #need improvement
-  ['TRANS TV', 'transtv', 'useetv'],
-  ['RCTI', '665', 'vidio'], #need improvement
-  ['SCTV', 'sctv', 'useetv'] #need improvement
-]
 
 times_on_csv = [
   '00.00 - 00.30', '00.30 - 01.00', '01.00 - 01.30', '01.30 - 02.00', '02.00 - 02.30', '02.30 - 03.00', 
@@ -153,6 +141,12 @@ def custom_excel_formatting(writer):
     for row in range(1, 49):
       worksheet.set_row(row, 25, custom_format)
   return writer
+
+with open('channels_data.csv', 'r') as read_obj:
+  csv_reader = reader(read_obj)
+  raw_channel = list(csv_reader)
+  raw_channel.pop(0) #remove header
+  channels_data = raw_channel
 
 locale.setlocale(locale.LC_TIME, "IND")
 start_time = time.time()
