@@ -134,9 +134,9 @@ def custom_excel_formatting(writer):
 
 with open('channels_data.csv', 'r') as read_obj:
   csv_reader = reader(read_obj)
-  raw_channel = list(csv_reader)
-  raw_channel.pop(0) #remove header
-  channels_data = raw_channel
+  raw_channels = list(csv_reader)
+  raw_channels.pop(0) #remove header
+  channels_data = raw_channels
 
 with open('times_placeholder.csv', 'r') as read_obj:
   csv_reader = reader(read_obj)
