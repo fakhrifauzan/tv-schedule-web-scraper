@@ -4,6 +4,7 @@ import math
 import pandas as pd
 import xlsxwriter
 import time
+import locale
 
 channels_data = [
   ['TVRI', 'tvri', 'useetv'],
@@ -136,10 +137,14 @@ def export_schedules_to_xlsx(schedules):
   print("Start export schedules to XLSX file...")
   writer = pd.ExcelWriter('result.xlsx', engine='xlsxwriter')
   for date, schedule in schedules.items():
-    schedule.to_excel(writer, sheet_name=date, index=False)
+    schedule.to_excel(writer, sheet_name=convert_date_to_day_name(date), index=False)
   writer = custom_excel_formatting(writer)
   writer.save()
   print("Done write to XLSX file.")
+
+def convert_date_to_day_name(date):
+  formatted_date = datetime.strptime(date, '%Y-%m-%d')
+  return formatted_date.strftime("%A")
 
 def custom_excel_formatting(writer):
   for sheet_name in writer.sheets.keys():
@@ -164,6 +169,7 @@ def custom_excel_formatting(writer):
       worksheet.set_row(row, 25, custom_format)
   return writer
 
+locale.setlocale(locale.LC_TIME, "IND")
 start_time = time.time()
 dates = generate_date_a_week_ago()
 get_all_channel_schedule_in_a_week(channels_data, dates)
