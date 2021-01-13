@@ -150,6 +150,13 @@ def custom_excel_formatting(writer):
       'text_wrap': True,
       'valign': 'vcenter'
     })
+    border_format = writer.book.add_format({
+      'border': True
+    })
+    worksheet.conditional_format('A1:K49', {
+      'type': 'no_errors',
+      'format': border_format
+    })
     worksheet.freeze_panes(1, 1)
     worksheet.set_column('A:A', 12, custom_format)
     worksheet.set_column('B:Z', 18, custom_format)
