@@ -98,16 +98,22 @@ def normalize_time(times):
 
 def export_schedules_to_xlsx(schedules):
   print("Start export schedules to XLSX file...")
-  writer = pd.ExcelWriter('result.xlsx', engine='xlsxwriter')
+  filename = 'Schedule ' + file_name_date(dates[0]) + ' - ' + file_name_date(dates[6]) + '.xlsx'
+  writer = pd.ExcelWriter(filename, engine='xlsxwriter')
   for date, schedule in schedules.items():
     schedule.to_excel(writer, sheet_name=convert_date(date), index=False)
   writer = custom_excel_formatting(writer)
   writer.save()
   print("Done write to XLSX file.")
+  print("File Name: " + filename)
 
 def convert_date(date):
   formatted_date = datetime.strptime(date, '%Y-%m-%d')
   return formatted_date.strftime("%A, %d %B %Y")
+
+def file_name_date(date):
+  formatted_date = datetime.strptime(date, '%Y-%m-%d')
+  return formatted_date.strftime("%d %B")
 
 def custom_excel_formatting(writer):
   for sheet_name in writer.sheets.keys():
