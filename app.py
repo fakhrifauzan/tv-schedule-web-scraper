@@ -98,7 +98,7 @@ def normalize_time(times):
 
 def export_schedules_to_xlsx(schedules):
   print("Start export schedules to XLSX file...")
-  filename = 'Schedule ' + file_name_date(dates[0]) + ' - ' + file_name_date(dates[6]) + '.xlsx'
+  filename = 'Schedule ' + file_name_date(dates[6]) + ' - ' + file_name_date(dates[0]) + '.xlsx'
   writer = pd.ExcelWriter(filename, engine='xlsxwriter')
   for date, schedule in schedules.items():
     schedule.to_excel(writer, sheet_name=convert_date(date), index=False)
